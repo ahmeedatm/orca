@@ -21082,5 +21082,32 @@
     "restartLocal": "Restart local daemon",
     "killAllLocal": "Kill all local sessions",
     "killFailed": "The terminal could not be ended. Last-observed sessions are retained."
+  },
+  "services": {
+    "sidebar": {
+      "label": "Services",
+      "unavailable": "Services unavailable"
+    },
+    "state": {
+      "erreur": "Error",
+      "veille": "Asleep",
+      "actif": "Running",
+      "inconnu": "Not checked yet"
+    },
+    "drawer": {
+      "title": "Services",
+      "updated": "Updated {{time}}",
+      "refresh": "Refresh",
+      "close": "Close",
+      "loading": "Loading services…",
+      "empty": "The NAS reports no services.",
+      "keyMissing": "The NAS key is missing from the macOS Keychain. Add it under orca-nas-azru:",
+      "keyRefused": "The NAS refused the key. Check the orca-nas-azru item in the Keychain.",
+      "unreachable": "NAS unreachable. Orca retries on its own.",
+      "invalid": "The NAS sent an unreadable answer.",
+      "retry": "Retry",
+      "noWorkspace": "Open a workspace to show this service in Orca's browser.",
+      "otherGroup": "Other"
+    }
   }
 }

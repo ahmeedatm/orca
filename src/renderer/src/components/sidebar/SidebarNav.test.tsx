@@ -223,6 +223,12 @@ describe('SidebarNav', () => {
     expect(mocks.getAgentBucketCounts).not.toHaveBeenCalled()
   })
 
+  it('shows the Services row even while the Agent Dashboard experiment is off', async () => {
+    const container = await renderSidebarNav()
+
+    expect(queryButtonByText(container, 'Services')).not.toBeNull()
+  })
+
   it('mounts the Agent Dashboard row only when its experiment is enabled', async () => {
     setSidebarState({
       settings: {

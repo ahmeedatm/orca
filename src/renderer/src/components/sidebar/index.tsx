@@ -8,7 +8,6 @@ import SetupScriptPromptCard from './SetupScriptPromptCard'
 import WorktreeList from './WorktreeList'
 import SidebarToolbar from './SidebarToolbar'
 import WorkspaceKanbanDrawer from './WorkspaceKanbanDrawer'
-import NasPanel from './NasPanel'
 import type { VirtualizedScrollAnchor } from '@/hooks/useVirtualizedScrollAnchor'
 import { cn } from '@/lib/utils'
 import { FolderPlus, Loader2 } from 'lucide-react'
@@ -34,6 +33,7 @@ const WorktreeVisibilityDialog = lazyWithRetry(() => import('./WorktreeVisibilit
 const OrcaYamlTrustDialog = lazyWithRetry(() => import('./OrcaYamlTrustDialog'))
 const ForgetSshWorkspaceDialog = lazyWithRetry(() => import('./ForgetSshWorkspaceDialog'))
 const AgentDashboardSidebarHost = lazyWithRetry(() => import('./AgentDashboardSidebarHost'))
+const ServicesSidebarHost = lazyWithRetry(() => import('./ServicesSidebarHost'))
 
 const MIN_WIDTH = 220
 const MAX_WIDTH = 500
@@ -208,8 +208,6 @@ function Sidebar({
                 />
               </>
             )}
-            {/* Why outside the ternary: switching to agents must not reload the NAS page. */}
-            <NasPanel hidden={sidebarBody === 'agents'} />
 
             <div className="relative shrink-0">
               <SetupScriptPromptCard />
@@ -292,6 +290,15 @@ function Sidebar({
           />
         </React.Suspense>
       ) : null}
+      <React.Suspense fallback={null}>
+        <ServicesSidebarHost
+          sidebarOpen={sidebarOpen}
+          workspaceBoardOpen={workspaceBoardOpen}
+          closeWorkspaceBoard={closeWorkspaceBoard}
+          leftSidebarStyle={leftSidebarStyle}
+          statusBarVisible={statusBarVisible}
+        />
+      </React.Suspense>
     </TooltipProvider>
   )
 }

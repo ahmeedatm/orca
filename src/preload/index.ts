@@ -62,6 +62,7 @@ import { fsApi } from './api/fs-bridge'
 import { gitApi } from './api/git-bridge'
 import { uiApi } from './api/ui-bridge'
 import { statsApi } from './api/stats-bridge'
+import { nasServicesApi } from './api/nas-services-bridge'
 import { memoryApi } from './api/memory-bridge'
 import { claudeUsageApi } from './api/claude-usage-bridge'
 import { codexUsageApi } from './api/codex-usage-bridge'
@@ -164,6 +165,7 @@ const api = {
   git: gitApi,
   ui: uiApi,
   stats: statsApi,
+  nasServices: nasServicesApi,
   memory: memoryApi,
   claudeUsage: claudeUsageApi,
   codexUsage: codexUsageApi,

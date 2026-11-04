@@ -9,11 +9,15 @@ l'amont.
 
 ## Ajouts
 
-- Section « NAS » sous la liste des projets dans la barre gauche
-  (`src/renderer/src/components/sidebar/NasPanel.tsx`) : page `https://azru.uk/ck/orca.html`
-  (dépôt nas-stacks, `homepage/config/orca.html`) avec les conteneurs en panne, le processeur et la mémoire.
-  Partition du navigateur d'Orca : la connexion au portier faite dans un onglet Orca sert au panneau.
-  Remplace le patch de `ahmeedatm/orca-panneau-nas`.
+- Entrée « Services » dans la navigation du haut de la barre gauche, sous « Tableau de bord des agents »
+  (`src/renderer/src/components/sidebar/ServicesSidebarEntry.tsx`), avec les compteurs en erreur, en veille
+  et actifs. Un clic ouvre le tiroir `src/renderer/src/components/services/ServicesDrawer.tsx` à côté de la
+  barre : services groupés, erreurs en premier, clic sur une ligne = onglet du navigateur d'Orca.
+  Le process main lit `GET https://azru.uk/etat/orca.json` (contrat : `src/shared/nas-services.ts`, côté NAS
+  dans nas-stacks) avec l'en-tête `X-Orca-Cle`, clé lue dans le trousseau (service `orca-nas-azru`, compte
+  `ahmed`) ; la clé ne passe jamais dans le renderer. Relevé toutes les 30 s tant que la barre est ouverte ;
+  si le NAS ne répond pas, nouvel essai après 30 s, 1 min, 2 min, puis toutes les 5 min.
+  Remplace la section « NAS » (webview de `https://azru.uk/ck/orca.html`) du bas de la barre.
 
 ## Le robot (`fork/`)
 

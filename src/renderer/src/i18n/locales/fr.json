@@ -20667,5 +20667,32 @@
       "loading": "Chargement de la langue…",
       "saving": "Enregistrement de la langue…"
     }
+  },
+  "services": {
+    "sidebar": {
+      "label": "Services",
+      "unavailable": "Services indisponibles"
+    },
+    "state": {
+      "erreur": "En erreur",
+      "veille": "En veille",
+      "actif": "Actif",
+      "inconnu": "Pas encore sondé"
+    },
+    "drawer": {
+      "title": "Services",
+      "updated": "Mis à jour {{time}}",
+      "refresh": "Actualiser",
+      "close": "Fermer",
+      "loading": "Chargement des services…",
+      "empty": "Le NAS ne signale aucun service.",
+      "keyMissing": "La clé du NAS manque dans le trousseau du Mac. Ajoute-la sous le nom orca-nas-azru :",
+      "keyRefused": "Le NAS refuse la clé. Vérifie l’élément orca-nas-azru du trousseau.",
+      "unreachable": "NAS injoignable. Orca réessaie tout seul.",
+      "invalid": "Le NAS a renvoyé une réponse illisible.",
+      "retry": "Réessayer",
+      "noWorkspace": "Ouvre un espace de travail pour afficher ce service dans le navigateur d’Orca.",
+      "otherGroup": "Autres"
+    }
   }
 }
