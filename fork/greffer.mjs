@@ -19,6 +19,7 @@ import {
   readFileSync,
   renameSync,
   rmSync,
+  statSync,
   writeFileSync
 } from 'node:fs'
 import { createRequire } from 'node:module'
@@ -35,7 +36,7 @@ const minimatch = require(
 )
 const configBuild = require(join(DEPOT, 'config/electron-builder.config.cjs'))
 
-const EQUIPE_OFFICIELLE = '6CX3WHS9HZ' // Lovecast LLC, qui signe les versions d'Orca
+const EXIGENCE_SIGNATURE = 'anchor apple generic and certificate leaf[subject.OU] = "6CX3WHS9HZ"' // Lovecast LLC
 const REPERE_FORK = 'orca-fork.json' // lu par robot.sh pour savoir si la greffe est à jour
 // Dossiers dont les noms de fichiers changent à chaque compilation (empreinte dans le nom).
 const DOSSIERS_HACHES = ['out/renderer/assets/', 'out/main/chunks/']
@@ -53,25 +54,39 @@ for (const cle of ['app', 'version', 'commit']) {
 const RESSOURCES = join(args.app, 'Contents/Resources')
 const ARCHIVE = join(RESSOURCES, 'app.asar')
 
+class ArretGreffe extends Error {}
+
 function arreter(message) {
-  console.error(`greffer : ${message}`)
-  process.exit(1)
+  throw new ArretGreffe(message)
 }
 
-function lireSignature(app) {
-  // codesign -dv écrit sur stderr.
-  return execFileSync('/bin/sh', ['-c', 'codesign -dv "$1" 2>&1', 'sh', app], { encoding: 'utf8' })
-}
-
-function verifierApp() {
-  if (!lireSignature(args.app).includes(`TeamIdentifier=${EQUIPE_OFFICIELLE}`)) {
-    arreter(`${args.app} n'est pas signée par l'équipe d'Orca`)
+// Le code (exécutable, frameworks, helpers) doit être intact et signé par l'équipe d'Orca ; seules les ressources,
+// que la greffe remplace, sont ignorées.
+function verifierSignature() {
+  try {
+    execFileSync(
+      'codesign',
+      ['--verify', '--deep', '--ignore-resources', `-R=${EXIGENCE_SIGNATURE}`, args.app],
+      {
+        stdio: 'pipe'
+      }
+    )
+  } catch {
+    arreter(`${args.app} : code modifié ou pas signé par l'équipe d'Orca`)
   }
-  const version = execFileSync(
+}
+
+function lireVersion() {
+  return execFileSync(
     '/usr/libexec/PlistBuddy',
     ['-c', 'Print :CFBundleShortVersionString', join(args.app, 'Contents/Info.plist')],
     { encoding: 'utf8' }
   ).trim()
+}
+
+function verifierApp() {
+  verifierSignature()
+  const version = lireVersion()
   if (version !== args.version) {
     arreter(`Orca installé en ${version}, fork compilé pour ${args.version}`)
   }
@@ -91,6 +106,9 @@ async function verifierFusible() {
 function lister(dossier, base = dossier) {
   return readdirSync(dossier, { withFileTypes: true }).flatMap((entree) => {
     const chemin = join(dossier, entree.name)
+    if (entree.isSymbolicLink()) {
+      arreter(`lien symbolique refusé dans la greffe : ${chemin}`)
+    }
     return entree.isDirectory() ? lister(chemin, base) : [relative(base, chemin)]
   })
 }
@@ -158,53 +176,92 @@ async function empaqueter(fichiers, destination) {
   await asar.createPackageFromStreams(destination, flux)
 }
 
-function garderAnciensHaches(ancien, nouveau) {
-  for (const chemin of lister(ancien).filter(estHache)) {
-    if (!existsSync(join(nouveau, chemin))) {
-      cpSync(join(ancien, chemin), join(nouveau, chemin))
+// Seulement les fichiers hachés de la version en place (listés par son archive) : une fenêtre ouverte peut encore les
+// charger. Ceux des greffes d'avant ne sont pas repris, le dossier ne grossit pas.
+function garderAnciensHaches(extrait, nouveau) {
+  for (const chemin of lister(extrait).filter(estHache)) {
+    const ancien = join(`${ARCHIVE}.unpacked`, chemin)
+    if (existsSync(ancien) && !existsSync(join(nouveau, chemin))) {
+      cpSync(ancien, join(nouveau, chemin))
     }
   }
 }
 
-function permuter(nouvelle) {
-  for (const suffixe of ['', '.unpacked']) {
-    const ancienne = `${ARCHIVE}.ancienne${suffixe}`
-    if (existsSync(ancienne)) {
-      rmSync(ancienne, { recursive: true })
+const SUFFIXES = ['.unpacked', ''] // le dossier d'abord : l'archive est ce qui rend l'app démarrable
+const ancienne = (suffixe) => `${ARCHIVE}.ancienne${suffixe}`
+const EN_COURS = join(RESSOURCES, 'orca-fork-greffe-en-cours') // présent = échange pas encore validé
+
+// Échange coupé (arrêt, panne) : on remet l'ancienne archive. Échange validé mais pas rangé : on range.
+function reparer() {
+  const aDefaire = existsSync(EN_COURS)
+  for (const suffixe of SUFFIXES) {
+    if (!existsSync(ancienne(suffixe))) {
+      continue
     }
-    renameSync(`${ARCHIVE}${suffixe}`, ancienne)
-    renameSync(`${nouvelle}${suffixe}`, `${ARCHIVE}${suffixe}`)
-    rmSync(ancienne, { recursive: true })
+    if (aDefaire) {
+      rmSync(`${ARCHIVE}${suffixe}`, { recursive: true, force: true })
+      renameSync(ancienne(suffixe), `${ARCHIVE}${suffixe}`)
+    } else {
+      rmSync(ancienne(suffixe), { recursive: true })
+    }
   }
+  rmSync(EN_COURS, { force: true })
+  for (const reste of [NOUVELLE, `${NOUVELLE}.unpacked`]) {
+    rmSync(reste, { recursive: true, force: true })
+  }
+}
+
+function permuter(verifierAvant) {
+  writeFileSync(EN_COURS, `${args.commit}\n`)
+  try {
+    verifierAvant()
+    for (const suffixe of SUFFIXES) {
+      renameSync(`${ARCHIVE}${suffixe}`, ancienne(suffixe))
+      renameSync(`${NOUVELLE}${suffixe}`, `${ARCHIVE}${suffixe}`)
+    }
+    verifierSignature()
+  } catch (erreur) {
+    reparer()
+    throw erreur
+  }
+  rmSync(EN_COURS) // point de validation : à partir d'ici la nouvelle archive est la bonne
+  reparer()
 }
 
 const travail = mkdtempSync(join(tmpdir(), 'orca-greffe-'))
-const nouvelle = `${ARCHIVE}.greffe`
+const NOUVELLE = `${ARCHIVE}.greffe`
 try {
+  reparer()
   verifierApp()
   await verifierFusible()
+  const inodeArchive = statSync(ARCHIVE).ino
   const extrait = join(travail, 'en-place')
   asar.extractAll(ARCHIVE, extrait)
   const fichiers = versionnerPackage(composerFichiers(extrait), travail)
   verifierCouverture(extrait, fichiers)
-  for (const reste of [nouvelle, `${nouvelle}.unpacked`]) {
-    if (existsSync(reste)) {
-      rmSync(reste, { recursive: true })
+  await empaqueter(fichiers, NOUVELLE)
+  garderAnciensHaches(extrait, `${NOUVELLE}.unpacked`)
+  // Une mise à jour officielle a pu remplacer l'app pendant l'empaquetage : on ne greffe pas sur la nouvelle.
+  permuter(() => {
+    if (lireVersion() !== args.version || statSync(ARCHIVE).ino !== inodeArchive) {
+      arreter("Orca a changé pendant la greffe, rien n'est remplacé")
     }
-  }
-  await empaqueter(fichiers, nouvelle)
-  garderAnciensHaches(`${ARCHIVE}.unpacked`, `${nouvelle}.unpacked`)
-  permuter(nouvelle)
+  })
   writeFileSync(
     join(RESSOURCES, REPERE_FORK),
     `${JSON.stringify({ version: args.version, commit: args.commit, greffe: new Date().toISOString() }, null, 2)}\n`
   )
-  if (!lireSignature(args.app).includes(`TeamIdentifier=${EQUIPE_OFFICIELLE}`)) {
-    arreter('signature officielle perdue')
-  }
   console.log(
     `greffe posée : ${args.app} (${fichiers.size} fichiers, ${args.version}, ${args.commit.slice(0, 10)})`
   )
+} catch (erreur) {
+  if (!(erreur instanceof ArretGreffe)) {
+    throw erreur
+  }
+  console.error(`greffer : ${erreur.message}`)
+  process.exitCode = 1
 } finally {
   rmSync(travail, { recursive: true })
+  rmSync(NOUVELLE, { recursive: true, force: true })
+  rmSync(`${NOUVELLE}.unpacked`, { recursive: true, force: true })
 }

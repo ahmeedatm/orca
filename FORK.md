@@ -39,5 +39,9 @@ dans Orca.app.
 - La greffe rompt le sceau des ressources : une copie neuve d'Orca greffée serait refusée par macOS (« endommagé »).
   Sur place, dans une app déjà ouverte une fois, Orca démarre.
 - Si Orca allume un jour le fusible `EnableEmbeddedAsarIntegrityValidation`, `greffer.mjs` refuse de greffer.
+- Pas encore vu en vrai : la mise à jour officielle d'une app greffée. Filet : si Orca reste 3 jours derrière la
+  dernière version, le robot lance un agent.
+- Tout ce qui est poussé sur `ahmed` s'exécute sur le Mac sous 15 min, avec le droit d'écrire dans Orca.app : le
+  compte GitHub `ahmeedatm` est la seule porte, à garder sous double authentification.
 - Entre une mise à jour officielle et la greffe suivante (15 min au plus, plus la compilation), Orca tourne sans
   les ajouts.
