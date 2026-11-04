@@ -206,9 +206,10 @@ function Sidebar({
                   onWorkspaceBoardDragPreviewCommit={solidifyWorkspaceBoardFromDrag}
                   onWorkspaceBoardDragPreviewCancel={cancelWorkspaceBoardDragPreview}
                 />
-                <NasPanel />
               </>
             )}
+            {/* Why outside the ternary: switching to agents must not reload the NAS page. */}
+            <NasPanel hidden={sidebarBody === 'agents'} />
 
             <div className="relative shrink-0">
               <SetupScriptPromptCard />
