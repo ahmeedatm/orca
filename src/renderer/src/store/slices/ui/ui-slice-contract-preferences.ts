@@ -113,6 +113,9 @@ export type UISlicePreferences = {
   /** Transient: the in-window Agent Dashboard companion drawer is open. Not persisted. */
   agentDashboardDrawerOpen: boolean
   setAgentDashboardDrawerOpen: (open: boolean) => void
+  /** Fork ahmeedatm/orca. Transient: the Services companion drawer is open. Not persisted. */
+  servicesDrawerOpen: boolean
+  setServicesDrawerOpen: (open: boolean) => void
   statusBarItems: StatusBarItem[]
   toggleStatusBarItem: (item: StatusBarItem) => void
   statusBarVisible: boolean

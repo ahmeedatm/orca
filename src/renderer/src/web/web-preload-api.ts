@@ -110,6 +110,8 @@ function createWebPreloadApi(): Omit<Partial<PreloadApi>, 'settings' | 'plugins'
           firstEventAt: null
         }))
     },
+    // Fork ahmeedatm/orca: the NAS key lives in the Mac keychain, out of reach of a web client.
+    nasServices: { get: () => Promise.resolve({ ok: false, reason: 'injoignable' }) },
     memory: {
       getSnapshot: () => Promise.resolve(createEmptyMemorySnapshot()),
       // Browser pages have no native-window veto; document visibility owns admission.

@@ -61,7 +61,7 @@ vi.mock('./worktree-list/listing/WorktreeList', () => ({
 
 vi.mock('./WslMovedProjectsSection', () => ({ default: () => null }))
 
-vi.mock('./NasPanel', () => ({ default: () => <div data-testid="nas-panel" /> }))
+vi.mock('./ServicesSidebarHost', () => ({ default: () => null }))
 
 vi.mock('./SidebarToolbar', () => ({
   default: () => <div data-testid="sidebar-toolbar" />

@@ -39,6 +39,7 @@ import type { JiraApi } from './api/jira-api'
 import type { LinearApi } from './api/linear-api'
 import type { MobileApi } from './api/mobile-api'
 import type { NativeChatApi } from './api/native-chat-api'
+import type { NasServicesApi } from './api/nas-services-bridge'
 import type { OnboardingApi, StarNagApi } from './api/onboarding-api'
 import type { OrcaProfileApi } from './api/orca-profile-api'
 import type {
@@ -137,6 +138,7 @@ export type PreloadApi = {
   notebook: FilesystemApi['notebook']
   docPreview: DocPreviewApi['docPreview']
   stats: StatsApi
+  nasServices: NasServicesApi
   memory: MemoryApi
   claudeUsage: ClaudeUsageApi
   codexUsage: CodexUsageApi

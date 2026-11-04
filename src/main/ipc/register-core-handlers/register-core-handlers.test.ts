@@ -218,6 +218,10 @@ vi.mock('../stats', () => ({
   registerStatsHandlers: registerStatsHandlersMock
 }))
 
+vi.mock('../nas-services', () => ({
+  registerNasServicesHandlers: vi.fn()
+}))
+
 vi.mock('../memory', () => ({
   registerMemoryHandlers: registerMemoryHandlersMock
 }))

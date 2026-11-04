@@ -24,6 +24,7 @@ import { registerFeedbackHandlers } from '../feedback'
 import { registerCrashReportingHandlers } from '../crash-reporting/crash-reporting'
 import { registerExportHandlers } from '../export'
 import { registerStatsHandlers } from '../stats'
+import { registerNasServicesHandlers } from '../nas-services'
 import { registerMemoryHandlers } from '../memory'
 import { registerRateLimitHandlers } from '../rate-limits'
 import { registerRuntimeHandlers } from '../runtime'
@@ -212,6 +213,7 @@ export function registerCoreHandlers(
   }
   registerExportHandlers()
   registerStatsHandlers(stats)
+  registerNasServicesHandlers()
   registerMemoryHandlers(store)
   registerNotificationHandlers(store, runtime)
   registerNotebookHandlers(store)
