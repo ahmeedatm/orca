@@ -11,6 +11,7 @@ import WorktreeList from './worktree-list/listing/WorktreeList'
 import WslMovedProjectsSection from './WslMovedProjectsSection'
 import SidebarToolbar from './SidebarToolbar'
 import WorkspaceKanbanDrawer from './workspace-board/surface/WorkspaceKanbanDrawer'
+import NasPanel from './NasPanel'
 import type { VirtualizedScrollAnchor } from '@/hooks/useVirtualizedScrollAnchor'
 import { cn } from '@/lib/utils'
 import { FolderPlus, Loader2 } from 'lucide-react'
@@ -213,6 +214,7 @@ function Sidebar({
                     onWorkspaceBoardDragPreviewCancel={cancelWorkspaceBoardDragPreview}
                   />
                   <WslMovedProjectsSection />
+                  <NasPanel />
                 </>
               )}
 
