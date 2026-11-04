@@ -214,9 +214,10 @@ function Sidebar({
                     onWorkspaceBoardDragPreviewCancel={cancelWorkspaceBoardDragPreview}
                   />
                   <WslMovedProjectsSection />
-                  <NasPanel />
                 </>
               )}
+              {/* Why outside the ternary: switching to agents must not reload the NAS page. */}
+              <NasPanel hidden={sidebarBody === 'agents'} />
 
               <div className="relative shrink-0">
                 <SetupScriptPromptCard />

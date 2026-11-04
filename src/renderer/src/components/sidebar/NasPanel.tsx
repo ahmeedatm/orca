@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { ORCA_BROWSER_GUEST_WEB_PREFERENCES_ATTRIBUTE } from '../../../../shared/browser-guest-web-preferences'
-import { ORCA_BROWSER_PARTITION } from '../../../../shared/constants'
 import { moveFocusToRendererBeforeWebviewDetach } from '@/components/browser-pane/host-guest/webview-registry'
 import { cn } from '@/lib/utils'
 
@@ -20,11 +19,11 @@ function readCollapsed(): boolean {
   return window.localStorage.getItem(NAS_PANEL_COLLAPSED_STORAGE_KEY) === '1'
 }
 
-function attachNasWebview(container: HTMLDivElement): () => void {
+function attachNasWebview(container: HTMLDivElement, partition: string): () => void {
   // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: Electron upgrades a created <webview> element into a WebviewTag.
   const webview = document.createElement('webview') as Electron.WebviewTag
   // Why the browser partition: the gate login done in an Orca browser tab also unlocks this panel.
-  webview.setAttribute('partition', ORCA_BROWSER_PARTITION)
+  webview.setAttribute('partition', partition)
   webview.setAttribute('webpreferences', ORCA_BROWSER_GUEST_WEB_PREFERENCES_ATTRIBUTE)
   webview.setAttribute('aria-label', 'NAS')
   webview.style.display = 'flex'
@@ -41,7 +40,14 @@ function attachNasWebview(container: HTMLDivElement): () => void {
     attempt += 1
     console.warn('[nas-panel] load failed, retrying in', delay, 'ms:', event.errorDescription)
     clearTimeout(retryTimer)
-    retryTimer = setTimeout(() => webview.reload(), delay)
+    // Why loadURL, not reload: reload only refreshes the chrome-error page left by the failure.
+    retryTimer = setTimeout(() => {
+      try {
+        void webview.loadURL(NAS_PANEL_URL).catch(() => {})
+      } catch {
+        webview.setAttribute('src', NAS_PANEL_URL)
+      }
+    }, delay)
   }
   const onLoaded = (): void => {
     attempt = 0
@@ -60,13 +66,25 @@ function attachNasWebview(container: HTMLDivElement): () => void {
   }
 }
 
-function NasPanel(): React.JSX.Element {
+function NasPanel({ hidden }: { hidden: boolean }): React.JSX.Element {
   const [collapsed, setCollapsed] = useState(readCollapsed)
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const container = containerRef.current
-    return container ? attachNasWebview(container) : undefined
+    let disposed = false
+    let detach: (() => void) | undefined
+    void window.api.browser
+      .sessionResolvePartition({ profileId: null })
+      .then((partition) => {
+        if (!disposed && partition && containerRef.current) {
+          detach = attachNasWebview(containerRef.current, partition)
+        }
+      })
+      .catch((error: unknown) => console.warn('[nas-panel] no browser partition:', error))
+    return () => {
+      disposed = true
+      detach?.()
+    }
   }, [])
 
   const toggle = (): void => {
@@ -78,7 +96,10 @@ function NasPanel(): React.JSX.Element {
   return (
     <section
       aria-label="NAS"
-      className="flex shrink-0 flex-col border-t border-worktree-sidebar-border"
+      className={cn(
+        'flex shrink-0 flex-col border-t border-worktree-sidebar-border',
+        hidden && 'hidden'
+      )}
     >
       <button
         type="button"
