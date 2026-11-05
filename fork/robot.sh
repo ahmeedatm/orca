@@ -124,6 +124,9 @@ preparer_depot() {
     git clone --quiet --filter=blob:none "$FORK" "$DEPOT" || passager "clone du fork"
     git -C "$DEPOT" remote add upstream "$AMONT"
   fi
+  # Clone sans fichiers : ceux d'une nouvelle version n'existent que chez l'amont, pas encore dans le fork.
+  git -C "$DEPOT" config remote.upstream.promisor true
+  git -C "$DEPOT" config remote.upstream.partialclonefilter blob:none
   git -C "$DEPOT" fetch --quiet origin ahmed || passager "fetch du fork"
   if ! git -C "$DEPOT" rev-parse --verify --quiet "refs/tags/$1" >/dev/null; then
     git -C "$DEPOT" fetch --quiet upstream "refs/tags/$1:refs/tags/$1" || passager "tag $1 introuvable chez stablyai/orca"

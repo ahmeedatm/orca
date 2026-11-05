@@ -3,7 +3,7 @@
 L'Orca d'Ahmed : [stablyai/orca](https://github.com/stablyai/orca) plus ses ajouts à lui, qui ne partent pas chez
 l'amont.
 
-- Branche `ahmed` : le tag de la version d'Orca installée (`v1.4.238` aujourd'hui) plus les ajouts. `main` reste le
+- Branche `ahmed` : le tag de la version d'Orca installée (`v1.4.250` aujourd'hui) plus les ajouts. `main` reste le
   miroir de l'amont.
 - Un ajout = une branche, puis une PR vers `ahmed`.
 
