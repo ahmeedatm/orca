@@ -9,7 +9,7 @@ import { formatUiRelativeTimeFromDate } from '@/i18n/relative-time-format'
 import {
   isWorkspaceBoardKeepOpenTarget,
   useWorkspaceKanbanOutsideDismiss
-} from '../sidebar/use-workspace-kanban-outside-dismiss'
+} from '../sidebar/workspace-board/surface/use-workspace-kanban-outside-dismiss'
 import {
   STATUS_BAR_RESERVE_HEIGHT,
   WORKSPACE_TOP_CHROME_HEIGHT
