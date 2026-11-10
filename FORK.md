@@ -20,3 +20,7 @@ l'amont.
   `ahmed`) ; la clé ne passe jamais dans le renderer. Relevé toutes les 30 s tant que la barre est ouverte ;
   si le NAS ne répond pas, nouvel essai après 30 s, 1 min, 2 min, puis toutes les 5 min.
   Remplace la section « NAS » (webview de `https://azru.uk/ck/orca.html`) du bas de la barre.
+- Paquet Linux x86_64 : `.github/workflows/perso-linux-appimage.yml` construit l'AppImage de `perso` (config
+  electron-builder de l'officiel, exécutable `orca-ide`) à chaque push, et la publie en release GitHub
+  `perso-v<version>-<sha7>` (`orca-linux-x86_64.AppImage` + `SHA256SUMS`). Sert à un portable Linux. L'updater intégré
+  d'Orca pointe toujours vers `stablyai/orca` : sous Linux la mise à jour passe par l'installateur, pas par l'app.

@@ -1,0 +1,93 @@
+name: Perso Linux AppImage
+
+# Fabrique l'AppImage Linux x86_64 du fork (branche `perso`) et la publie en release GitHub, pour qu'un portable Linux
+# l'installe et la mette à jour (installer-orca, dépôt dotfiles). La version Mac n'a pas de release : le robot
+# (ahmeedatm/orca-robot) regreffe app.asar sur place. Config de paquet reprise telle quelle de l'officiel
+# (config/electron-builder.config.cjs, cible linux AppImage, exécutable `orca-ide`).
+#
+# - push sur `perso` ou lancement manuel : construit puis publie une release `perso-v<version>-<sha7>`.
+# - pull_request qui touche ce fichier : construit seulement, l'AppImage reste en artefact (preuve avant fusion).
+
+on:
+  push:
+    branches:
+      - perso
+  pull_request:
+    paths:
+      - .github/workflows/perso-linux-appimage.yml
+  workflow_dispatch:
+
+concurrency:
+  group: perso-linux-appimage-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  appimage:
+    name: AppImage linux-x64
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      NODE_OPTIONS: --max-old-space-size=4096
+      ORCA_BACKGROUND_LAUNCH: '1'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/install-node-dependencies
+        with:
+          native-runtime: electron
+          cache-dependency-path: |
+            pnpm-lock.yaml
+            mobile/pnpm-lock.yaml
+
+      # electron-builder exige out/mobile-web (beforePack), qui se construit depuis les dépendances de mobile/.
+      - uses: ./.github/actions/install-mobile-dependencies
+
+      # Même chaîne que le job linux-x64 de release-cut.yml : build complet (hélice Wayland via Docker), puis builder.
+      - name: Build app
+        run: pnpm run build:release
+
+      - name: Package AppImage
+        run: |
+          node config/scripts/ensure-native-runtime.mjs --runtime=electron
+          pnpm exec electron-builder --config config/electron-builder.config.cjs --linux AppImage --x64 --publish never
+
+      - name: Verify AppImage
+        run: |
+          set -euo pipefail
+          test -s dist/orca-linux.AppImage
+          file dist/orca-linux.AppImage
+          file dist/orca-linux.AppImage | grep -q 'ELF 64-bit.*x86-64'
+          mkdir release
+          cp dist/orca-linux.AppImage release/orca-linux-x86_64.AppImage
+          (cd release && sha256sum orca-linux-x86_64.AppImage > SHA256SUMS && cat SHA256SUMS)
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: orca-linux-x86_64-appimage
+          path: release/
+          retention-days: 7
+          compression-level: 0
+
+      - name: Publish release
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          version="$(node -p "require('./package.json').version")"
+          tag="perso-v${version}-${GITHUB_SHA::7}"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" release/* --clobber
+          else
+            gh release create "$tag" release/* \
+              --target "$GITHUB_SHA" \
+              --title "Orca perso ${version} (${GITHUB_SHA::7}), Linux x86_64" \
+              --notes "AppImage Linux x86_64 de la branche perso au commit ${GITHUB_SHA}. Somme dans SHA256SUMS." \
+              --latest
+          fi
